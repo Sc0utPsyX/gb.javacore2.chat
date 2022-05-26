@@ -59,7 +59,9 @@ public class Handler {
 
         switch (command) {
             case BROADCAST_MESSAGE -> server.broadcast(user, split[1]);
+            case PRIVATE_MESSAGE -> server.broadcast(user, split[2], split[1]);
             default -> System.out.println("Unknown message " + message);
+
         }
     }
 
