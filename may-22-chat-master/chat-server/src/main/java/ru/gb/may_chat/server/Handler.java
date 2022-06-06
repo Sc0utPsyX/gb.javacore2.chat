@@ -65,7 +65,15 @@ public class Handler {
 
     private void authorize() {
         System.out.println("Authorizing");
-
+        Thread socketTimeout = new Thread(() -> {
+            try {
+                Thread.sleep(20000);
+                socket.close();
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        });
+        socketTimeout.start();
         try {
             while (!socket.isClosed()) {
                 String msg = in.readUTF();
@@ -93,6 +101,7 @@ public class Handler {
                         this.user = nickname;
                         send(AUTH_OK.getCommand() + REGEX + nickname);
                         server.addHandler(this);
+                        socketTimeout.interrupt();
                         break;
                     }
                 }
