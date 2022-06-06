@@ -8,6 +8,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
+import java.sql.SQLOutput;
+import java.sql.Timestamp;
+import java.time.LocalTime;
 
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
 import static ru.gb.may_chat.enums.Command.AUTH_MESSAGE;
@@ -43,6 +47,7 @@ public class Handler {
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
                 try {
                     String message = in.readUTF();
+                    System.out.println("Hello");
                     parseMessage(message);
                 } catch (IOException e) {
                     System.out.println("Connection broken with client: " + user);
@@ -67,11 +72,19 @@ public class Handler {
 
     private void authorize() {
         System.out.println("Authorizing");
-
+        Thread socketTimeout = new Thread(() -> {
+            try {
+                Thread.sleep(20000);
+                socket.close();
+                } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        });
+        socketTimeout.start();
         try {
             while (!socket.isClosed()) {
                 String msg = in.readUTF();
-                if (msg.startsWith(AUTH_MESSAGE.getCommand())) {
+            if (msg.startsWith(AUTH_MESSAGE.getCommand())) {
                     String[] parsed = msg.split(REGEX);
                     String response = "";
                     String nickname = null;
@@ -81,6 +94,7 @@ public class Handler {
                     } catch (WrongCredentialsException e) {
                         response = ERROR_MESSAGE.getCommand() + REGEX + e.getMessage();
                         System.out.println("Wrong credentials: " + parsed[1]);
+
                     }
                     
                     if (server.isUserAlreadyOnline(nickname)) {
@@ -95,6 +109,7 @@ public class Handler {
                         this.user = nickname;
                         send(AUTH_OK.getCommand() + REGEX + nickname);
                         server.addHandler(this);
+                        socketTimeout.interrupt();
                         break;
                     }
                 }
