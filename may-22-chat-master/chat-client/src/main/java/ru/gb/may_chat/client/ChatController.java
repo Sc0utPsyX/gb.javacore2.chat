@@ -27,6 +27,7 @@ import java.util.ResourceBundle;
 
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
 import static ru.gb.may_chat.enums.Command.*;
+import static ru.gb.may_chat.enums.Command.CHANGE_NICK;
 
 public class ChatController implements Initializable, MessageProcessor {
 
@@ -77,6 +78,11 @@ public class ChatController implements Initializable, MessageProcessor {
     }
 
     public void closeApplication(ActionEvent actionEvent) {
+        try {
+            networkService.shutdown();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Platform.exit();
     }
 
@@ -87,6 +93,10 @@ public class ChatController implements Initializable, MessageProcessor {
                 return;
             }
             String recipient = contacts.getSelectionModel().getSelectedItem();
+                if (text.startsWith("/changenickname")){
+                String[] changeNick = text.split(" ", 2);
+                networkService.sendMessage(CHANGE_NICK.getCommand() + REGEX + changeNick[1]);
+                }
                 if (recipient.equals("ALL")) {
                     networkService.sendMessage(BROADCAST_MESSAGE.getCommand() + REGEX + text);
                 } else {

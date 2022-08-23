@@ -1,9 +1,11 @@
 package ru.gb.may_chat.server.service.impl;
 
 import ru.gb.may_chat.server.error.WrongCredentialsException;
+import ru.gb.may_chat.server.model.DatabaseHandler;
 import ru.gb.may_chat.server.model.User;
 import ru.gb.may_chat.server.service.UserService;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -18,13 +20,6 @@ public class InMemoryUserServiceImpl implements UserService {
 
     @Override
     public void start() {
-        users.addAll(List.of(
-             new User("log1", "pass1", "nick1"),
-             new User("log2", "pass2", "nick2"),
-             new User("log3", "pass3", "nick3"),
-             new User("log4", "pass4", "nick4"),
-             new User("log5", "pass5", "nick5")
-        ));
         System.out.println("User service started");
     }
 
@@ -35,6 +30,15 @@ public class InMemoryUserServiceImpl implements UserService {
 
     @Override
     public String authenticate(String login, String password) {
+        try {
+            DatabaseHandler.connect();
+            if (DatabaseHandler.readUserDatabase(login, password) != null){
+                users.add(new User(login, password, DatabaseHandler.readUserDatabase(login, password)));
+            }
+            DatabaseHandler.disconnect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         for (User user : users) {
             if (login.equals(user.getLogin()) && password.equals(user.getPassword())) {
 //            if (Objects.equals(login, user.getLogin()) && Objects.equals(password, user.getPassword())) {
