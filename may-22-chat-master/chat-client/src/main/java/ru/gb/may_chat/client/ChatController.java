@@ -96,6 +96,8 @@ public class ChatController implements Initializable, MessageProcessor {
                 if (text.startsWith("/changenickname")){
                 String[] changeNick = text.split(" ", 2);
                 networkService.sendMessage(CHANGE_NICK.getCommand() + REGEX + changeNick[1]);
+                inputField.clear();
+                return;
                 }
                 if (recipient.equals("ALL")) {
                     networkService.sendMessage(BROADCAST_MESSAGE.getCommand() + REGEX + text);
