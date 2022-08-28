@@ -3,6 +3,7 @@ package ru.gb.may_chat.server;
 import ru.gb.may_chat.constants.MessageConstants;
 import ru.gb.may_chat.enums.Command;
 import ru.gb.may_chat.server.error.WrongCredentialsException;
+import ru.gb.may_chat.server.model.DatabaseHandler;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -10,11 +11,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
-import static ru.gb.may_chat.enums.Command.AUTH_MESSAGE;
-import static ru.gb.may_chat.enums.Command.AUTH_OK;
-import static ru.gb.may_chat.enums.Command.BROADCAST_MESSAGE;
-import static ru.gb.may_chat.enums.Command.ERROR_MESSAGE;
-import static ru.gb.may_chat.enums.Command.PRIVATE_MESSAGE;
+import static ru.gb.may_chat.enums.Command.*;
 
 public class Handler {
     private Socket socket;
@@ -45,7 +42,6 @@ public class Handler {
                     String message = in.readUTF();
                     parseMessage(message);
                 } catch (IOException e) {
-                    System.out.println("Connection broken with client: " + user);
                     server.removeHandler(this);
                 }
             }
@@ -60,6 +56,11 @@ public class Handler {
         switch (command) {
             case BROADCAST_MESSAGE -> server.broadcast(user, split[1]);
             case PRIVATE_MESSAGE -> server.broadcast(user, split[2], split[1]);
+            case CHANGE_NICK -> {
+                server.broadcast(user, new String("changed nickname to " + split[1] + "please reconnect"));
+                DatabaseHandler.changeNick(user, split[1]);
+                break;
+            }
             default -> System.out.println("Unknown message " + message);
 
         }
@@ -83,7 +84,6 @@ public class Handler {
                     String[] parsed = msg.split(REGEX);
                     String response = "";
                     String nickname = null;
-
                     try {
                         nickname = server.getUserService().authenticate(parsed[1], parsed[2]);
                     } catch (WrongCredentialsException e) {
