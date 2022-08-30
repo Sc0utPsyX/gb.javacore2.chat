@@ -18,13 +18,14 @@ import ru.gb.may_chat.client.net.MessageProcessor;
 import ru.gb.may_chat.client.net.NetworkService;
 import ru.gb.may_chat.enums.Command;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import static java.awt.SystemColor.text;
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
 import static ru.gb.may_chat.enums.Command.*;
 import static ru.gb.may_chat.enums.Command.CHANGE_NICK;
@@ -72,12 +73,19 @@ public class ChatController implements Initializable, MessageProcessor {
     private NetworkService networkService;
 
     private String user;
+    private File historyFile;
 
     public void mockAction(ActionEvent actionEvent) {
         System.out.println("mock");
     }
 
     public void closeApplication(ActionEvent actionEvent) {
+        try {
+            DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(historyFile, true)); // тут будем дописывать в историю.
+            dataOutputStream.writeUTF(chatArea.getText());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         try {
             networkService.shutdown();
         } catch (IOException e) {
@@ -154,6 +162,22 @@ public class ChatController implements Initializable, MessageProcessor {
         user = split[1];
         loginPanel.setVisible(false);
         mainPanel.setVisible(true);
+        try {
+            historyFile = new File(new String("may-22-chat-master/chat-client/src/main/java/ru/gb/may_chat/client/history_[" + user + "].txt"));
+            if(historyFile.createNewFile()) return;
+            DataInputStream dataInputStream = new DataInputStream(new FileInputStream(historyFile));
+            String buffer = dataInputStream.readUTF();
+            String[] array = buffer.split("\n");
+            int m = array.length;
+            if (m > 100) {
+                m = array.length - 100;
+            } else m = 0;
+            for (int i = m; i < array.length; i++) {
+                chatArea.appendText(array[i] + "\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sendChangeNick(ActionEvent actionEvent) {
