@@ -78,7 +78,10 @@ public class Server {
 
     public synchronized void removeHandler(Handler handler) {
         this.handlers.remove(handler);
+        sendContacts();
+    }
 
+    public synchronized void updateHandlers(Handler handler){
         sendContacts();
     }
 

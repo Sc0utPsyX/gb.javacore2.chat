@@ -50,8 +50,14 @@ public class InMemoryUserServiceImpl implements UserService {
     }
 
     @Override
-    public String changeNick(String login, String newNick) {
-        return null; //@TODO
+    public String changeNick(String nickname, String newNick) {
+        DatabaseHandler.changeNick(nickname, newNick);
+        for (User user: users) {
+            if (user.getNick().equals(nickname)){
+                user.setNick(newNick);
+            }
+        }
+        return newNick;
     }
 
     @Override

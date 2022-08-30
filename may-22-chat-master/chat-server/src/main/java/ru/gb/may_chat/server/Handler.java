@@ -57,8 +57,9 @@ public class Handler {
             case BROADCAST_MESSAGE -> server.broadcast(user, split[1]);
             case PRIVATE_MESSAGE -> server.broadcast(user, split[2], split[1]);
             case CHANGE_NICK -> {
-                server.broadcast(user, new String("changed nickname to " + split[1] + "please reconnect"));
-                DatabaseHandler.changeNick(user, split[1]);
+                server.broadcast(user, new String("changed nickname to " + split[1]));
+                user = server.getUserService().changeNick(user, split[1]);
+                server.updateHandlers(this);
                 break;
             }
             default -> System.out.println("Unknown message " + message);
