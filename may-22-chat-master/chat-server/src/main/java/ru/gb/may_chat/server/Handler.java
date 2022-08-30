@@ -4,11 +4,16 @@ import ru.gb.may_chat.constants.MessageConstants;
 import ru.gb.may_chat.enums.Command;
 import ru.gb.may_chat.server.error.WrongCredentialsException;
 import ru.gb.may_chat.server.model.DatabaseHandler;
+import ru.gb.may_chat.server.service.UserService;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
 import static ru.gb.may_chat.enums.Command.*;
@@ -17,7 +22,7 @@ public class Handler {
     private Socket socket;
     private DataOutputStream out;
     private DataInputStream in;
-    private Thread handlerThread;
+    private  UserService userService;
     private Server server;
     private String user;
 
@@ -34,7 +39,8 @@ public class Handler {
     }
 
     public void handle() {
-        handlerThread = new Thread(() -> {
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        executorService.execute(() -> {
             authorize();
             System.out.println("Auth done");
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
@@ -42,11 +48,11 @@ public class Handler {
                     String message = in.readUTF();
                     parseMessage(message);
                 } catch (IOException e) {
-                    server.removeHandler(this);
+                    server.removeHandler(Handler.this);
+                    Thread.currentThread().interrupt();
                 }
             }
         });
-        handlerThread.start();
     }
 
     private void parseMessage(String message) {
@@ -122,8 +128,8 @@ public class Handler {
         }
     }
 
-    public Thread getHandlerThread() {
-        return handlerThread;
+    public UserService getUserService() {
+        return userService;
     }
 
     public String getUser() {
