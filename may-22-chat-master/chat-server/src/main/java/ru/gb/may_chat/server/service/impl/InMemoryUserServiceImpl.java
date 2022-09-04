@@ -1,5 +1,6 @@
 package ru.gb.may_chat.server.service.impl;
 
+import ru.gb.may_chat.server.Server;
 import ru.gb.may_chat.server.error.WrongCredentialsException;
 import ru.gb.may_chat.server.model.DatabaseHandler;
 import ru.gb.may_chat.server.model.User;
@@ -20,12 +21,12 @@ public class InMemoryUserServiceImpl implements UserService {
 
     @Override
     public void start() {
-        System.out.println("User service started");
+        Server.LOGGER.info("User service started");
     }
 
     @Override
     public void stop() {
-        System.out.println("User service stopped");
+        Server.LOGGER.warning("User service stopped");
     }
 
     @Override

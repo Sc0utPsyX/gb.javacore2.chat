@@ -28,9 +28,9 @@ public class Handler {
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            System.out.println("Handler created");
+            Server.LOGGER.info("Handler created");
         } catch (IOException e) {
-            System.err.println("Connection problems with user: " + user);
+            Server.LOGGER.warning("Connection problems with user: " + user);
         }
     }
 
@@ -38,7 +38,7 @@ public class Handler {
         ExecutorService executorService = Executors.newCachedThreadPool();
         executorService.execute(() -> {
             authorize();
-            System.out.println("Auth done");
+            Server.LOGGER.info("Auth done");
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
                 try {
                     String message = in.readUTF();
@@ -56,21 +56,28 @@ public class Handler {
         Command command = Command.getByCommand(split[0]);
 
         switch (command) {
-            case BROADCAST_MESSAGE -> server.broadcast(user, split[1]);
-            case PRIVATE_MESSAGE -> server.broadcast(user, split[2], split[1]);
+            case BROADCAST_MESSAGE -> {
+                server.broadcast(user, split[1]);
+                Server.LOGGER.info("Some Message sent."); // в задании было условие клиент прислал сообщение
+            }
+            case PRIVATE_MESSAGE -> {
+                server.broadcast(user, split[2], split[1]);
+                Server.LOGGER.info("Some Private Message sent."); // в задании было условие клиент прислал сообщение
+            }
             case CHANGE_NICK -> {
                 server.broadcast(user, new String("changed nickname to " + split[1]));
+                Server.LOGGER.info(new String(user + " changed nickname to " + split[1]));
                 user = server.getUserService().changeNick(user, split[1]);
                 server.updateHandlers(this);
                 break;
             }
-            default -> System.out.println("Unknown message " + message);
+            default -> Server.LOGGER.info("Unknown message " + message);
 
         }
     }
 
     private void authorize() {
-        System.out.println("Authorizing");
+        Server.LOGGER.info("Authorizing");
         Thread socketTimeout = new Thread(() -> {
             try {
                 Thread.sleep(20000);
@@ -91,18 +98,18 @@ public class Handler {
                         nickname = server.getUserService().authenticate(parsed[1], parsed[2]);
                     } catch (WrongCredentialsException e) {
                         response = ERROR_MESSAGE.getCommand() + REGEX + e.getMessage();
-                        System.out.println("Wrong credentials: " + parsed[1]);
+                        Server.LOGGER.warning("Wrong credentials: " + parsed[1]);
                     }
                     
                     if (server.isUserAlreadyOnline(nickname)) {
                         response = ERROR_MESSAGE.getCommand() + REGEX + "This client already connected";
-                        System.out.println("Already connected");
+                        Server.LOGGER.warning("Already connected");
                     }
                     
                     if (!response.equals("")) {
                         send(response);
                     } else {
-                        System.out.println("Auth ok");
+                        Server.LOGGER.info("Auth ok");
                         this.user = nickname;
                         send(AUTH_OK.getCommand() + REGEX + nickname);
                         server.addHandler(this);
