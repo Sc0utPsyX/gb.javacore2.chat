@@ -8,12 +8,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static ru.gb.may_chat.constants.MessageConstants.REGEX;
 import static ru.gb.may_chat.enums.Command.*;
 
 public class Server {
+    public static final Logger LOGGER = Logger.getLogger(Server.class.getName());
     private static final int PORT = 8189;
     private List<Handler> handlers;
 
@@ -25,13 +29,14 @@ public class Server {
     }
 
     public void start() {
+        LOGGER.setLevel(Level.ALL);
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server start!");
+            LOGGER.info("Server start!");
             userService.start();
             while (true) {
-                System.out.println("Waiting for connection......");
+                LOGGER.info("Waiting for connection......");
                 Socket socket = serverSocket.accept();
-                System.out.println("Client connected");
+                LOGGER.info("Client connected");
                 Handler handler = new Handler(socket, this);
                 handler.handle();
             }
